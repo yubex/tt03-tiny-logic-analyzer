@@ -25,9 +25,12 @@ module yubex_tiny_logic_analyzer (
     reg rising_edge_detected;
     reg falling_edge_detected;
 
-    localparam event_sr_size = 200;
-    reg [event_sr_size-1:0] rising_edge_sr;
-    reg [event_sr_size-1:0] falling_edge_sr;
+    localparam edge_delay_cnt_size = 12;
+    localparam cnt_max_val = 2500;
+    reg [edge_delay_cnt_size-1:0] rising_edge_delay_cnt;
+    reg rising_edge_delay_cnt_en;
+    reg [edge_delay_cnt_size-1:0] falling_edge_delay_cnt;
+    reg falling_edge_delay_cnt_en;
  
   // store samples in shift register and avoid metastability
   always @(posedge clk or posedge rst)
@@ -46,8 +49,8 @@ module yubex_tiny_logic_analyzer (
 	if(rst) begin
                 high_detected         <= 1'b0;
                 low_detected          <= 1'b0;
-                rising_edge_detected  <= 1'b1;
-                falling_edge_detected <= 1'b1;
+                rising_edge_detected  <= 1'b0;
+                falling_edge_detected <= 1'b0;
     	    end 
     else begin
         high_detected         <= 1'b0;
@@ -76,31 +79,51 @@ module yubex_tiny_logic_analyzer (
     end
   end
 
-  // add sr for edge events, to make it visible on the 7 segment display
-  always @(posedge clk or posedge rising_edge_detected )
+  // add delay for edge events, to make it visible on the 7 segment display
+  always @(posedge clk or posedge rst)
   begin
-	if(rising_edge_detected) begin
-        	    rising_edge_sr <= {event_sr_size{1'b1}};
+	if(rst) begin
+        	    rising_edge_delay_cnt     <= {edge_delay_cnt_size{1'b0}};
+                rising_edge_delay_cnt_en  <= 1'b0;
+        	    falling_edge_delay_cnt    <= {edge_delay_cnt_size{1'b0}};
+                falling_edge_delay_cnt_en <= 1'b0;
     	    end 
     else begin
-        rising_edge_sr <= {rising_edge_sr[event_sr_size-2:0],1'b0};
-    end
-  end 
-  always @(posedge clk or posedge falling_edge_detected)
-  begin
-	if(falling_edge_detected) begin
-        	    falling_edge_sr <= {event_sr_size{1'b1}};
-    	    end 
-    else begin
-        falling_edge_sr <= {falling_edge_sr[event_sr_size-2:0],1'b0};
+        if (rising_edge_delay_cnt_en) begin
+            if (rising_edge_delay_cnt >= cnt_max_val) begin
+                rising_edge_delay_cnt    <= {edge_delay_cnt_size{1'b0}};
+                rising_edge_delay_cnt_en <= 1'b0;
+            end
+            else begin
+                rising_edge_delay_cnt <= rising_edge_delay_cnt + 1;
+            end 
+        end
+        if (rising_edge_detected) begin
+            rising_edge_delay_cnt_en <= 1'b1;
+            rising_edge_delay_cnt    <= {edge_delay_cnt_size{1'b0}};
+        end
+
+        if (falling_edge_delay_cnt_en) begin
+            if (falling_edge_delay_cnt >= cnt_max_val) begin
+                falling_edge_delay_cnt    <= {edge_delay_cnt_size{1'b0}};
+                falling_edge_delay_cnt_en <= 1'b0;
+            end
+            else begin
+                falling_edge_delay_cnt <= falling_edge_delay_cnt + 1;
+            end 
+        end
+        if (falling_edge_detected) begin
+            falling_edge_delay_cnt_en <= 1'b1;
+            falling_edge_delay_cnt    <= {edge_delay_cnt_size{1'b0}};
+        end
     end
   end 
 
 // assign 7 segment outputs
 assign io_out[0]   = (high_detected == 1'b1) ? 1'b1 : 1'b0;
-assign io_out[2:1] = (falling_edge_sr[event_sr_size-1] == 1'b1) ? 2'b11 : 2'b00;
+assign io_out[2:1] = (falling_edge_delay_cnt_en == 1'b1) ? 2'b11 : 2'b00;
 assign io_out[3]   = (low_detected == 1'b1) ? 1'b1 : 1'b0;
-assign io_out[5:4] = (rising_edge_sr[event_sr_size-1] == 1'b1) ? 2'b11 : 2'b00;
+assign io_out[5:4] = (rising_edge_delay_cnt_en == 1'b1) ? 2'b11 : 2'b00;
 assign io_out[6]   = 1'b0;
 assign io_out[7]   = (rst == 1'b1) ? 1'b1 : 1'b0;
 
