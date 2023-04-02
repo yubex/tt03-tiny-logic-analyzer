@@ -25,7 +25,7 @@ module yubex_tiny_logic_analyzer (
     reg rising_edge_detected;
     reg falling_edge_detected;
 
-    localparam event_sr_size = 256;
+    localparam event_sr_size = 250;
     reg [event_sr_size-1:0] rising_edge_sr;
     reg [event_sr_size-1:0] falling_edge_sr;
  
