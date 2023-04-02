@@ -26,7 +26,7 @@ documentation:
   how_it_works: |
   The samples of the data input pin are shifted into a shift register first.
   After that the 2 most significant bits are used to detect the current signal state (high, low) and the edge events (rising edge, falling edge).
-  There are 4 different states/events displayed on the 7 segment display:
+  There are 4 different states/events displayed on the 7 segment display.
   high -> segment a should be on
   low -> segment d should be on
   rising edge detected -> segments e and f should be on
