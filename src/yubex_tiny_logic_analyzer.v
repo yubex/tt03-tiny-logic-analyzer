@@ -83,9 +83,9 @@ module yubex_tiny_logic_analyzer (
   always @(posedge clk or posedge rst)
   begin
 	if(rst) begin
-        	    rising_edge_delay_cnt     <= {edge_delay_cnt_size{1'b0}};
+        	rising_edge_delay_cnt     <= {edge_delay_cnt_size{1'b0}};
                 rising_edge_delay_cnt_en  <= 1'b0;
-        	    falling_edge_delay_cnt    <= {edge_delay_cnt_size{1'b0}};
+        	falling_edge_delay_cnt    <= {edge_delay_cnt_size{1'b0}};
                 falling_edge_delay_cnt_en <= 1'b0;
     	    end 
     else begin
